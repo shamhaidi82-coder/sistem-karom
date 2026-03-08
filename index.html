@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sistem Kewangan Karom</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0f1a;
+    --surface: #111827;
+    --surface2: #1a2332;
+    --border: #1e2d42;
+    --accent: #3b82f6;
+    --accent2: #06b6d4;
+    --green: #10b981;
+    --red: #ef4444;
+    --amber: #f59e0b;
+    --text: #e2e8f0;
+    --muted: #64748b;
+    --subtle: #334155;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Plus Jakarta Sans',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; }
+
+  .topbar { background:var(--surface); border-bottom:1px solid var(--border); padding:12px 16px; display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; z-index:100; gap:10px; flex-wrap:wrap; }
+  .logo { display:flex; align-items:center; gap:10px; }
+  .logo-icon { width:36px; height:36px; background:linear-gradient(135deg,var(--accent),var(--accent2)); border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:18px; flex-shrink:0; }
+  .logo-text { font-weight:800; font-size:15px; line-height:1.2; }
+  .logo-sub { font-size:10px; color:var(--muted); }
+  .nav-tabs { display:flex; gap:4px; flex-wrap:wrap; }
+  .nav-tab { background:transparent; border:none; color:var(--muted); padding:8px 12px; border-radius:8px; cursor:pointer; font-size:12px; font-weight:600; font-family:inherit; transition:all 0.2s; white-space:nowrap; }
+  .nav-tab:hover { color:var(--text); background:var(--surface2); }
+  .nav-tab.active { background:rgba(59,130,246,0.15); color:var(--accent); }
+  .btn-login { background:var(--accent); color:#fff; border:none; padding:8px 16px; border-radius:8px; cursor:pointer; font-size:12px; font-weight:700; font-family:inherit; white-space:nowrap; }
+  .admin-badge { background:rgba(16,185,129,0.15); color:var(--green); border:1px solid rgba(16,185,129,0.3); padding:5px 12px; border-radius:20px; font-size:11px; font-weight:700; }
+
+  .container { max-width:1200px; margin:0 auto; padding:20px 16px; }
+  .page { display:none; animation:fadeUp 0.3s ease; }
+  .page.active { display:block; }
+  @keyframes fadeUp { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+
+  .card { background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:20px; }
+  .card-title { font-size:13px; font-weight:700; color:var(--muted); margin-bottom:14px; display:flex; align-items:center; gap:6px; }
+
+  .stats-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:14px; margin-bottom:20px; }
+  .stat-card { background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:18px; text-align:center; position:relative; overflow:hidden; }
+  .stat-icon { font-size:24px; margin-bottom:8px; }
+  .stat-val { font-size:22px; font-weight:800; color:var(--accent2); }
+  .stat-label { font-size:11px; color:var(--muted); margin-top:4px; }
+
+  .table-wrap { overflow-x:auto; border-radius:12px; border:1px solid var(--border); }
+  table { width:100%; border-collapse:collapse; font-size:12px; }
+  thead tr { background:var(--surface2); }
+  th { padding:10px 12px; text-align:left; color:var(--muted); font-weight:700; font-size:11px; white-space:nowrap; border-bottom:1px solid var(--border); }
+  td { padding:9px 12px; border-bottom:1px solid var(--border); vertical-align:middle; }
+  tr:last-child td { border-bottom:none; }
+  tr:hover td { background:rgba(255,255,255,0.02); }
+  .sticky-col { position:sticky; left:0; background:var(--surface); z-index:5; }
+  thead .sticky-col { background:var(--surface2); }
+
+  .badge-green { background:rgba(16,185,129,0.15); color:#34d399; border-radius:6px; padding:3px 8px; font-size:11px; font-weight:700; }
+  .badge-red { background:rgba(239,68,68,0.1); color:#f87171; border-radius:6px; padding:3px 8px; font-size:11px; }
+  .badge-amber { background:rgba(245,158,11,0.15); color:#fbbf24; border-radius:6px; padding:3px 8px; font-size:11px; font-weight:700; }
+  .badge-blue { background:rgba(59,130,246,0.15); color:#60a5fa; border-radius:6px; padding:3px 8px; font-size:11px; font-weight:700; }
+  .badge-gray { background:rgba(100,116,139,0.15); color:#94a3b8; border-radius:6px; padding:3px 8px; font-size:11px; }
+
+  .grid-cell { width:32px; height:32px; border-radius:6px; border:none; cursor:pointer; font-size:14px; display:inline-flex; align-items:center; justify-content:center; transition:transform 0.15s; }
+  .grid-cell:hover { transform:scale(1.2); }
+  .grid-cell.paid { background:rgba(16,185,129,0.2); }
+  .grid-cell.unpaid { background:var(--surface2); color:var(--subtle); }
+  .grid-cell.readonly { cursor:default; }
+  .grid-cell.readonly:hover { transform:none; }
+
+  .form-group { margin-bottom:14px; }
+  label { display:block; font-size:12px; color:var(--muted); margin-bottom:5px; font-weight:600; }
+  input, select, textarea { width:100%; background:var(--bg); border:1px solid var(--border); color:var(--text); padding:10px 12px; border-radius:8px; font-size:13px; font-family:inherit; }
+  input:focus, select:focus, textarea:focus { outline:none; border-color:var(--accent); }
+  .btn { border:none; padding:11px 20px; border-radius:8px; cursor:pointer; font-weight:700; font-size:13px; font-family:inherit; transition:all 0.2s; }
+  .btn-primary { background:var(--accent); color:#fff; }
+  .btn-primary:hover { background:#2563eb; }
+  .btn-success { background:var(--green); color:#fff; }
+  .btn-success:hover { background:#059669; }
+  .btn-danger { background:var(--red); color:#fff; font-size:11px; padding:6px 10px; }
+  .btn-ghost { background:transparent; color:var(--muted); border:1px solid var(--border); }
+  .btn-ghost:hover { border-color:var(--accent); color:var(--accent); }
+  .btn-full { width:100%; }
+
+  .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index:200; display:none; align-items:center; justify-content:center; padding:16px; }
+  .modal-overlay.open { display:flex; }
+  .modal { background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:24px; width:100%; max-width:380px; }
+  .modal h3 { font-size:16px; font-weight:800; margin-bottom:18px; }
+
+  #toast { position:fixed; bottom:20px; right:16px; z-index:999; background:var(--green); color:#fff; padding:12px 18px; border-radius:10px; font-size:13px; font-weight:600; display:none; animation:slideIn 0.3s ease; max-width:300px; }
+  #toast.error { background:var(--red); }
+  @keyframes slideIn { from{transform:translateX(60px);opacity:0} to{transform:translateX(0);opacity:1} }
+
+  .member-card { display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:10px; cursor:pointer; transition:background 0.15s; border:1px solid transparent; }
+  .member-card:hover { background:var(--surface2); }
+  .member-card.selected { background:rgba(59,130,246,0.1); border-color:rgba(59,130,246,0.3); }
+  .avatar { width:36px; height:36px; border-radius:50%; background:linear-gradient(135deg,#1d4ed8,#06b6d4); display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:800; color:#fff; flex-shrink:0; }
+
+  .progress-bar { height:6px; background:var(--surface2); border-radius:3px; overflow:hidden; margin-top:4px; }
+  .progress-fill { height:100%; background:linear-gradient(90deg,var(--accent),var(--accent2)); border-radius:3px; transition:width 0.6s ease; }
+
+  .tabung-hero { background:linear-gradient(135deg,#0f2027,#203a43,#2c5364); border:1px solid var(--border); border-radius:16px; padding:28px; text-align:center; margin-bottom:20px; position:relative; overflow:hidden; }
+  .tabung-amount { font-size:42px; font-weight:800; color:#fff; margin:8px 0; }
+  .tabung-label { font-size:12px; color:rgba(255,255,255,0.6); }
+
+  /* ── LEADERBOARD ── */
+  .lb-wrap { background:linear-gradient(160deg,#0f1f35,#0a0f1a); border:1px solid var(--border); border-radius:16px; overflow:hidden; }
+  .lb-header { background:linear-gradient(90deg,#1e3a5f,#1a2d4a); padding:18px 20px; display:flex; align-items:center; gap:10px; border-bottom:1px solid var(--border); }
+  .lb-header h2 { font-size:16px; font-weight:800; }
+  .lb-header span { font-size:11px; color:var(--muted); margin-left:auto; }
+  .lb-row { display:flex; align-items:center; gap:12px; padding:13px 20px; border-bottom:1px solid rgba(30,45,66,0.6); transition:background 0.15s; cursor:pointer; }
+  .lb-row:last-child { border-bottom:none; }
+  .lb-row:hover { background:rgba(59,130,246,0.05); }
+  .lb-row.top1 { background:linear-gradient(90deg,rgba(255,215,0,0.08),transparent); }
+  .lb-row.top2 { background:linear-gradient(90deg,rgba(192,192,192,0.06),transparent); }
+  .lb-row.top3 { background:linear-gradient(90deg,rgba(205,127,50,0.06),transparent); }
+  .lb-rank { width:36px; text-align:center; font-weight:800; font-size:18px; flex-shrink:0; }
+  .lb-rank.gold   { color:#ffd700; text-shadow:0 0 12px rgba(255,215,0,0.5); }
+  .lb-rank.silver { color:#c0c0c0; text-shadow:0 0 12px rgba(192,192,192,0.4); }
+  .lb-rank.bronze { color:#cd7f32; text-shadow:0 0 12px rgba(205,127,50,0.4); }
+  .lb-rank.normal { color:var(--muted); font-size:14px; }
+  .lb-avatar { width:40px; height:40px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:16px; font-weight:800; color:#fff; flex-shrink:0; }
+  .lb-info { flex:1; min-width:0; }
+  .lb-name { font-weight:700; font-size:14px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .lb-detail { font-size:11px; color:var(--muted); margin-top:2px; }
+  .lb-amount { text-align:right; flex-shrink:0; }
+  .lb-rm { font-size:16px; font-weight:800; }
+  .lb-months { font-size:10px; color:var(--muted); margin-top:2px; }
+  .lb-bar { height:3px; border-radius:2px; margin-top:6px; transition:width 0.8s ease; }
+  .culas-tag { background:rgba(239,68,68,0.12); color:#f87171; border:1px solid rgba(239,68,68,0.2); border-radius:20px; padding:2px 8px; font-size:10px; font-weight:700; }
+  .rajin-tag { background:rgba(16,185,129,0.12); color:#34d399; border:1px solid rgba(16,185,129,0.2); border-radius:20px; padding:2px 8px; font-size:10px; font-weight:700; }
+
+  .loading { text-align:center; padding:60px 20px; color:var(--muted); }
+  .loading-spinner { width:32px; height:32px; border:3px solid var(--border); border-top-color:var(--accent); border-radius:50%; animation:spin 0.8s linear infinite; margin:0 auto 12px; }
+  @keyframes spin { to{transform:rotate(360deg)} }
+
+  select option { background:#1a2332; }
+  .two-col { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  @media(max-width:700px) { .two-col { grid-template-columns:1fr; } }
+  .section-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:10px; }
+  .section-header h2 { font-size:18px; font-weight:800; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="logo">
+    <div class="logo-icon">🎯</div>
+    <div>
+      <div class="logo-text">Karom Club</div>
+      <div class="logo-sub">Sistem Kewangan 2025/2026</div>
+    </div>
+  </div>
+  <div class="nav-tabs">
+    <button class="nav-tab active"   onclick="showPage('dashboard')">📊 Dashboard</button>
+    <button class="nav-tab"          onclick="showPage('ranking')">🏆 Ranking</button>
+    <button class="nav-tab"          onclick="showPage('rekod')">📋 Rekod</button>
+    <button class="nav-tab"          onclick="showPage('ahli')">👤 Ahli</button>
+    <button class="nav-tab"          onclick="showPage('tabung')">💰 Tabung</button>
+    <button class="nav-tab" id="tab-tambah" style="display:none" onclick="showPage('tambah')">➕ Rekod Baru</button>
+  </div>
+  <div id="auth-area">
+    <button class="btn-login" onclick="openLogin()">🔐 Admin Login</button>
+  </div>
+</div>
+
+<div class="container">
+  <div id="loading" class="loading">
+    <div class="loading-spinner"></div>
+    <div>Memuatkan data...</div>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div class="page" id="page-dashboard">
+    <div class="stats-grid" id="stats-grid"></div>
+    <div class="two-col">
+      <div class="card">
+        <div class="card-title">📊 Kutipan Bulanan</div>
+        <div id="chart-bulan"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">🏆 Top 5 Pembayar</div>
+        <div id="chart-top5"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RANKING / LEADERBOARD -->
+  <div class="page" id="page-ranking">
+    <div class="section-header">
+      <div>
+        <h2>🏆 Ranking Ahli</h2>
+        <div style="font-size:11px;color:var(--muted);margin-top:3px">Turutan ikut jumlah bayaran terbanyak</div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <span id="ranking-info" class="badge-blue"></span>
+      </div>
+    </div>
+
+    <div class="lb-wrap" id="leaderboard"></div>
+
+    <!-- Statistik bawah -->
+    <div class="two-col" style="margin-top:16px">
+      <div class="card">
+        <div class="card-title">🌟 Ahli Paling Rajin</div>
+        <div id="rank-rajin"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">⚠️ Ahli Culas (kurang 50%)</div>
+        <div id="rank-culas"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- REKOD GRID -->
+  <div class="page" id="page-rekod">
+    <div class="section-header">
+      <div>
+        <h2>📋 Rekod Kutipan</h2>
+        <div style="font-size:11px;color:var(--muted);margin-top:3px" id="rekod-hint"></div>
+      </div>
+      <div style="display:flex;gap:8px" id="rekod-actions"></div>
+    </div>
+    <div class="table-wrap">
+      <table id="rekod-table"></table>
+    </div>
+  </div>
+
+  <!-- AHLI DETAIL -->
+  <div class="page" id="page-ahli">
+    <div style="display:grid;grid-template-columns:clamp(180px,240px,30%) 1fr;gap:16px">
+      <div class="card" style="padding:14px">
+        <div class="card-title">👤 Senarai Ahli <span id="ahli-count" class="badge-blue" style="margin-left:auto"></span></div>
+        <div id="ahli-list" style="max-height:70vh;overflow-y:auto"></div>
+        <button class="btn btn-success btn-full" style="margin-top:10px;font-size:12px;display:none" id="btn-add-ahli" onclick="openAddAhli()">+ Tambah Ahli</button>
+      </div>
+      <div id="ahli-detail">
+        <div class="card" style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:260px;color:var(--muted)">
+          <div style="font-size:40px;margin-bottom:10px">👈</div>
+          <div style="font-size:14px">Pilih ahli untuk lihat rekod</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TABUNG -->
+  <div class="page" id="page-tabung">
+    <div class="tabung-hero" id="tabung-hero"></div>
+    <div class="two-col">
+      <div class="card">
+        <div class="section-header">
+          <div class="card-title" style="margin:0">💸 Rekod Perbelanjaan</div>
+          <button class="btn btn-danger" id="btn-keluar" style="display:none" onclick="openAddKeluar()">+ Tambah</button>
+        </div>
+        <div id="keluar-list"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">📈 Ringkasan Kewangan</div>
+        <div id="kewangan-summary"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAMBAH (Admin) -->
+  <div class="page" id="page-tambah">
+    <div style="max-width:480px;margin:0 auto">
+      <div class="card" style="margin-bottom:16px">
+        <h3 style="font-size:16px;font-weight:800;margin-bottom:18px">💳 Rekod Bayaran Yuran</h3>
+        <div class="form-group">
+          <label>Nama Ahli</label>
+          <select id="pay-ahli"><option value="">-- Pilih Ahli --</option></select>
+        </div>
+        <div class="form-group">
+          <label>Bulan</label>
+          <select id="pay-bulan"></select>
+        </div>
+        <div class="form-group">
+          <label>Amaun (RM)</label>
+          <input type="number" id="pay-amaun" value="10" min="1">
+        </div>
+        <div id="pay-status" style="display:none;padding:10px;border-radius:8px;font-size:12px;margin-bottom:12px"></div>
+        <button class="btn btn-success btn-full" onclick="submitYuran()">💾 Rekod Bayaran</button>
+      </div>
+      <div class="card">
+        <div class="section-header">
+          <h3 style="font-size:15px;font-weight:800">🗓️ Tambah Bulan Baru</h3>
+        </div>
+        <div class="two-col">
+          <div class="form-group" style="margin:0">
+            <label>Bulan</label>
+            <select id="new-month">
+              <option value="01">Januari</option><option value="02">Februari</option><option value="03">Mac</option>
+              <option value="04">April</option><option value="05">Mei</option><option value="06">Jun</option>
+              <option value="07">Julai</option><option value="08">Ogos</option><option value="09">September</option>
+              <option value="10">Oktober</option><option value="11">November</option><option value="12">Disember</option>
+            </select>
+          </div>
+          <div class="form-group" style="margin:0">
+            <label>Tahun</label>
+            <input type="number" id="new-year" value="2026" min="2024" max="2035">
+          </div>
+        </div>
+        <button class="btn btn-primary btn-full" style="margin-top:12px" onclick="submitBulan()">+ Tambah Bulan</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODALS -->
+<div class="modal-overlay" id="modal-login">
+  <div class="modal">
+    <h3>🔐 Admin Login</h3>
+    <div class="form-group">
+      <label>Password</label>
+      <input type="password" id="login-pw" placeholder="Masukkan password admin" onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <div style="display:flex;gap:10px">
+      <button class="btn btn-primary" style="flex:1" onclick="doLogin()">Log Masuk</button>
+      <button class="btn btn-ghost" style="flex:1" onclick="closeModal('modal-login')">Batal</button>
+    </div>
+  </div>
+</div>
+<div class="modal-overlay" id="modal-add-ahli">
+  <div class="modal">
+    <h3>👤 Tambah Ahli Baru</h3>
+    <div class="form-group">
+      <label>Nama Ahli</label>
+      <input type="text" id="new-ahli-name" placeholder="Contoh: Abg Razak" onkeydown="if(event.key==='Enter')submitAhli()">
+    </div>
+    <div style="display:flex;gap:10px">
+      <button class="btn btn-success" style="flex:1" onclick="submitAhli()">✅ Tambah</button>
+      <button class="btn btn-ghost" style="flex:1" onclick="closeModal('modal-add-ahli')">Batal</button>
+    </div>
+  </div>
+</div>
+<div class="modal-overlay" id="modal-add-keluar">
+  <div class="modal">
+    <h3>💸 Rekod Perbelanjaan</h3>
+    <div class="form-group"><label>Tarikh</label><input type="date" id="k-tarikh"></div>
+    <div class="form-group">
+      <label>Kategori</label>
+      <select id="k-kategori">
+        <option>Bil Elektrik</option><option>Peralatan Karom</option><option>Hadiah Game</option><option>Sewa Tempat</option><option>Lain-lain</option>
+      </select>
+    </div>
+    <div class="form-group"><label>Penerangan</label><input type="text" id="k-penerangan" placeholder="Contoh: Bayar bil elektrik April"></div>
+    <div class="form-group"><label>Amaun (RM)</label><input type="number" id="k-amaun" min="1" placeholder="0"></div>
+    <div style="display:flex;gap:10px">
+      <button class="btn btn-danger" style="flex:1;padding:11px" onclick="submitKeluar()">💾 Rekod</button>
+      <button class="btn btn-ghost" style="flex:1" onclick="closeModal('modal-add-keluar')">Batal</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+<script>
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzlhmVV9axYIQM16ZqwLcfgWu1rZveRAKLFh4l2qL4OxcUnceTaQtdddxtdHH3j2HbWjA/exec";
+
+const AVATAR_COLORS = [
+  "linear-gradient(135deg,#ffd700,#ff8c00)", "linear-gradient(135deg,#c0c0c0,#808080)",
+  "linear-gradient(135deg,#cd7f32,#8b4513)", "linear-gradient(135deg,#3b82f6,#06b6d4)",
+  "linear-gradient(135deg,#8b5cf6,#ec4899)", "linear-gradient(135deg,#10b981,#059669)",
+  "linear-gradient(135deg,#f59e0b,#d97706)", "linear-gradient(135deg,#ef4444,#dc2626)",
+  "linear-gradient(135deg,#6366f1,#4f46e5)", "linear-gradient(135deg,#14b8a6,#0d9488)",
+];
+
+let DATA = { ahli:[], bulan:[], yuran:[], keluar:[] };
+let isAdmin = false;
+let adminPw = "";
+let selectedAhli = null;
+
+// --- INITIALIZATION ---
+async function init() {
+  const loadingEl = document.getElementById("loading");
+  if (loadingEl) loadingEl.style.display = "flex";
+
+  try {
+    // 1. Cuba ambil data yang di-inject oleh Google Apps Script
+    // Kita guna try-catch supaya kalau run offline pun tak 'crash'
+    try {
+      // @ts-ignore
+      const rawData = <?!= data ?>; 
+      if (rawData && rawData.ahli) {
+        DATA = rawData;
+        console.log("Data loaded via Script Injection");
+        renderAll();
+        if (loadingEl) loadingEl.style.display = "none";
+        return;
+      }
+    } catch (e) {
+      console.warn("Script injection failed, trying API fetch...");
+    }
+
+    // 2. Jika gagal, buat fetch manual ke URL API
+    await refreshData();
+    
+  } catch (err) {
+    console.error("Init Error:", err);
+    showToast("Gagal memuatkan data. Sila refresh.", "error");
+  }
+}
+
+// --- DATA HELPERS ---
+function paidSet() {
+  const s = {};
+  DATA.yuran.forEach(y => {
+    if (!s[y.BulanID]) s[y.BulanID] = new Set();
+    s[y.BulanID].add(y.Ahli);
+  });
+  return s;
+}
+
+function totalMasuk() { return DATA.yuran.reduce((s,y)=>s+(Number(y.Amaun)||10),0); }
+function totalKeluar() { return DATA.keluar.reduce((s,k)=>s+(Number(k.Amaun)||0),0); }
+function baki() { return totalMasuk() - totalKeluar(); }
+
+function getRankedAhli() {
+  const totalBulan = DATA.bulan.length;
+  return DATA.ahli.map(a => {
+    const bayaran = DATA.yuran.filter(y => y.Ahli === a.Nama);
+    const jumlah  = bayaran.reduce((s,y)=>s+(Number(y.Amaun)||10),0);
+    const bilBulan = bayaran.length;
+    const pct = totalBulan ? Math.round(bilBulan/totalBulan*100) : 0;
+    return { nama:a.Nama, jumlah, bilBulan, pct, totalBulan };
+  }).sort((a,b) => b.jumlah - a.jumlah || b.bilBulan - a.bilBulan);
+}
+
+// --- API CORE ---
+async function apiPost(payload) {
+  // Tunjuk loading kecil atau disable button boleh buat di sini
+  try {
+    const res = await fetch(SCRIPT_URL, {
+      method: "POST",
+      mode: "no-cors", // Penting untuk elak isu CORS di sesetengah browser
+      body: JSON.stringify({ ...payload, password: adminPw })
+    });
+    
+    // Disebabkan 'no-cors', kita tak boleh baca response.ok
+    // Jadi kita assume berjaya dan refresh data
+    showToast("Permintaan dihantar...");
+    setTimeout(refreshData, 1500); 
+    return { ok: true, msg: "Sedang dikemaskini..." };
+  } catch(e) {
+    // Jika tidak guna no-cors (Standard Way):
+    try {
+        const resNormal = await fetch(SCRIPT_URL, {
+            method: "POST",
+            body: JSON.stringify({ ...payload, password: adminPw })
+        });
+        const result = await resNormal.json();
+        if (result.ok) {
+            showToast(result.msg, "success");
+            await refreshData();
+        } else {
+            showToast(result.msg, "error");
+        }
+        return result;
+    } catch(err) {
+        showToast("Ralat sambungan server", "error");
+        return { ok:false };
+    }
+  }
+}
+
+async function refreshData() {
+  try {
+    const response = await fetch(SCRIPT_URL + "?t=" + Date.now());
+    const text = await response.text();
+    
+    // Apps Script memulangkan HTML jika guna doGet. 
+    // Kita perlu pastikan kita ambil data JSON yang betul.
+    let jsonData;
+    const match = text.match(/id="data"[^>]*>([^<]*)</);
+    
+    if (match) {
+      jsonData = JSON.parse(match[1]);
+    } else {
+      // Jika Apps Script anda dipulangkan sebagai JSON terus
+      jsonData = JSON.parse(text);
+    }
+
+    if (jsonData) {
+      DATA = jsonData;
+      renderAll();
+      const loadingEl = document.getElementById("loading");
+      if (loadingEl) loadingEl.style.display = "none";
+    }
+  } catch (e) {
+    console.error("Refresh Data Error:", e);
+    // Jika masih loading, mungkin URL SCRIPT_URL anda salah atau tak di-deploy
+  }
+}
+
+// --- AUTH ---
+function doLogin() {
+  const pw = document.getElementById("login-pw").value;
+  if (!pw) return;
+  
+  // Set secara lokal dahulu
+  adminPw = pw; 
+  isAdmin = true;
+  
+  document.getElementById("auth-area").innerHTML = `
+    <span class="admin-badge">✅ Admin</span> 
+    <button class="btn-login" style="background:#334155;margin-left:8px" onclick="doLogout()">Keluar</button>`;
+  
+  const tabTambah = document.getElementById("tab-tambah");
+  if(tabTambah) tabTambah.style.display = "block";
+  
+  closeModal("modal-login");
+  document.getElementById("login-pw").value = "";
+  showToast("Mod Admin diaktifkan", "success");
+  renderAll();
+}
+
+// --- RENDERING (Sama seperti asal dengan sedikit optimasi) ---
+function renderAll() {
+  renderDashboard();
+  renderRanking();
+  renderRekod();
+  renderAhliList();
+  renderTabung();
+  populateSelects();
+}
+
+// ... (Kekalkan fungsi renderDashboard, renderRanking, renderRekod anda yang asal) ...
+// ... (Hanya pastikan nama ID dalam HTML sepadan) ...
+
+// --- ACTIONS ---
+async function toggleYuran(ahli, bulanId) {
+  if (!isAdmin) return showToast("Sila login admin", "error");
+  const paid = paidSet()[bulanId]?.has(ahli);
+  await apiPost({ action: paid ? "removeYuran" : "addYuran", ahli, bulanId, amaun: 10 });
+}
+
+async function submitYuran() {
+  const ahli = document.getElementById("pay-ahli").value;
+  const bulan = document.getElementById("pay-bulan").value;
+  const amaun = document.getElementById("pay-amaun").value || 10;
+  if (!ahli || !bulan) return showToast("Pilih ahli & bulan!", "error");
+  
+  await apiPost({ action: "addYuran", ahli, bulanId: bulan, amaun: Number(amaun) });
+}
+
+// Jalankan init bila page load
+init();
+</script>
+
+</body>
+</html>
